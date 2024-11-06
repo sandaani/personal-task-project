@@ -1,3 +1,5 @@
+const { getTasks } = require("../controllers/taskControllers");
+
 const taskRoutes=(req, res) => {
     if (req.method === 'GET'){
         getTasks(req, res);
@@ -8,7 +10,7 @@ const taskRoutes=(req, res) => {
     } else if (req.method === 'DELETE'){
         deleteTask(req , res)
     } else {
-        res.writeHead(404, 'data Not Found', { 'content-type': 'aplication/json'})
+        res.WriteHead(404, 'data Not Found', { 'content-type': 'aplication/json'})
         res.end(JSON.stringify({
             message: "Unknown Method required."
         }))
