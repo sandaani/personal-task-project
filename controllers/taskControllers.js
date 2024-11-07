@@ -1,55 +1,92 @@
-const {IncomingForm} =require( 'formidable');
-const { readTasksfromfile, writeTasksToFile } = require("../utils/fileHandler")
-const {copyFileSync} = require('fs');
+const fs = require('fs');
 const path = require('path');
+const formidable = require('formidable');
+const { readFile, writeFile } = require('../utils/fileHandler');
+const filePath = path.join(__dirname, '../data/tasks.json');
 
-exports.getTasks=(req, res) => {
-    const tasks=readTasksfromfile();
-    res.writeHead(200, { 'content-type' : 'application/json'})
-    res.end(JSON.stringify(tasks))
+// Helper function to read tasks from JSON file
+const readTasks = () => readFile(filePath);
 
-}
+exports.getTasks = (req, res) => {
+    const tasks = readTasks();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(tasks));
+};
 
-exports.CreateTask = (req, res) => {
-    const form = new IncomingForm();
+exports.createTask = (req, res) => {
+    const form = new formidable.IncomingForm();
     form.parse(req, (err, fields, files) => {
         if (err) {
-            res.writeHead(400, { 'content-type' : 'application/json'});
-            res.end(JSON.stringify({
-                message: 'Error parsing form'
-            }))
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Form submission error' }));
             return;
         }
 
-        const tasks = readTasksfromfile()
-        const newTask = {
-            id: Date.now(),
-            title: fields.title,
-            description: fields ?.description || '',
-            status: fields ?.status || 'pending',
-            image: files.image ? `/uploads/${files.image.name}` : null,
+        const tasks = readTasks();
+        const newTask = { id: tasks.length + 1, ...fields, status: 'pending' };
+
+        // Handle image upload if provided
+        if (files.image) {
+            const oldPath = files.image.path;
+            const newPath = path.join(__dirname, '../uploads/', files.image.name);
+            fs.renameSync(oldPath, newPath);
+            newTask.image = `/uploads/${files.image.name}`;
         }
 
         tasks.push(newTask);
+        writeFile(filePath, tasks);
 
-        writeTasksToFile(tasks);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(newTask));
+    });
+};
+
+exports.updateTask = (req, res) => {
+    const taskId = parseInt(req.url.split('/').pop(), 10);
+    const tasks = readTasks();
+    const taskIndex = tasks.findIndex(task => task.id === taskId);
+
+    if (taskIndex === -1) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Task not found' }));
+        return;
+    }
+
+    const form = new formidable.IncomingForm();
+    form.parse(req, (err, fields, files) => {
+        if (err) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Form submission error' }));
+            return;
+        }
+
+        tasks[taskIndex] = { ...tasks[taskIndex], ...fields };
 
         if (files.image) {
-            copyFileSync(files.image.path, path.join(__dirname, '../uploads', files.image.name));
-            res.end(JSON.stringify(newTask))
-            
+            const oldPath = files.image.path;
+            const newPath = path.join(__dirname, '../uploads/', files.image.name);
+            fs.renameSync(oldPath, newPath);
+            tasks[taskIndex].image = `/uploads/${files.image.name}`;
         }
-    })
 
-}
+        writeFile(filePath, tasks);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(tasks[taskIndex]));
+    });
+};
 
-exports.updateTask = (req , res) => {
-    res.end(JSON.stringify({
-        message: 'Not yet implemented'
-    }))
-}
 exports.deleteTask = (req, res) => {
-    res.end(JSON.stringify({
-        message: 'Not yet implemented'
-    }))
-}
+    const taskId = parseInt(req.url.split('/').pop(), 10);
+    const tasks = readTasks();
+    const updatedTasks = tasks.filter(task => task.id !== taskId);
+
+    if (updatedTasks.length === tasks.length) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Task not found' }));
+        return;
+    }
+
+    writeFile(filePath, updatedTasks);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ message: 'Task deleted successfully' }));
+};
