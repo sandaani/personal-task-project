@@ -7,7 +7,7 @@ exports.writeTasksToFile=(tasks) => {
     fs.writeFileSync(filePath, JSON.stringify(tasks))
 }
 
-exports.readTasksfromfile =() => {
+exports.readTasksFromFile =() => {
     if (fs.existsSync(filePath)) {
         writeTasksToFile([])
         
