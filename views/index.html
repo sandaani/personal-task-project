@@ -3,29 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Task Manager</title>
+    <title>Task Manager</title>
+    <style>
+        /* Style for the page */
+        body { font-family: Arial, sans-serif; padding: 20px; background: linear-gradient(135deg, #6a0dad, #1e90ff); color: #fff; }
+        .section { margin-bottom: 30px; padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        label, button { display: block; margin-top: 10px; }
+        input, select { padding: 8px; margin-top: 5px; width: 100%; }
+        button { background-color: #6a0dad; color: #fff; border: none; padding: 10px; cursor: pointer; }
+        button:hover { background-color: #1e90ff; }
+    </style>
 </head>
 <body>
-    <h1>Task Manager API</h1>
-    <form id="taskForm">
-        <label>Title:</label>
-        <input type="text" id="title" required><br><br>
-        <label>Description:</label>
-        <input type="text" id="description"><br><br>
-        <button type="submit">Create Task</button>
-    </form>
+    <h1>Task Manager</h1>
+
+    <!-- Create Task Section -->
+    <div class="section">
+        <h2>Create Task</h2>
+        <form id="createTaskForm">
+            <label>Title</label>
+            <input type="text" name="title" required>
+            <label>Description</label>
+            <input type="text" name="description">
+            <label>Image</label>
+            <input type="file" name="image">
+            <button type="submit">Create Task</button>
+        </form>
+    </div>
+
+    <!-- View Tasks Section -->
+    <div class="section">
+        <h2>View Tasks</h2>
+        <button id="viewTasksButton">Get All Tasks</button>
+        <pre id="tasksDisplay"></pre>
+    </div>
+
+    <!-- Update Task Section -->
+    <div class="section">
+        <h2>Update Task</h2>
+        <form id="updateTaskForm">
+            <label>Task ID</label>
+            <input type="number" name="id" required>
+            <label>Title</label>
+            <input type="text" name="title">
+            <label>Description</label>
+            <input type="text" name="description">
+            <label>Image</label>
+            <input type="file" name="image">
+            <button type="submit">Update Task</button>
+        </form>
+    </div>
+
+    <!-- Delete Task Section -->
+    <div class="section">
+        <h2>Delete Task</h2>
+        <form id="deleteTaskForm">
+            <label>Task ID</label>
+            <input type="number" name="id" required>
+            <button type="submit">Delete Task</button>
+        </form>
+    </div>
+
     <script>
-        document.getElementById('taskForm').onsubmit = async function (e) {
+        const apiBaseUrl = 'http://localhost:9000/tasks';
+
+        // Create Task
+        document.getElementById('createTaskForm').onsubmit = async function (e) {
             e.preventDefault();
-            const title = document.getElementById('title').value;
-            const description = document.getElementById('description').value;
-            const response = await fetch('/tasks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, description })
-            });
+            const formData = new FormData(this);
+            const response = await fetch(apiBaseUrl, { method: 'POST', body: formData });
             const data = await response.json();
-            console.log(data);
+            alert("Task Created: " + JSON.stringify(data));
+        };
+
+        // View Tasks
+        document.getElementById('viewTasksButton').onclick = async function () {
+            const response = await fetch(apiBaseUrl);
+            const data = await response.json();
+            document.getElementById('tasksDisplay').textContent = JSON.stringify(data, null, 2);
+        };
+
+        // Update Task
+        document.getElementById('updateTaskForm').onsubmit = async function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const taskId = formData.get('id');
+            formData.delete('id'); // Remove ID from form data
+            const response = await fetch(`${apiBaseUrl}/${taskId}`, { method: 'PUT', body: formData });
+            const data = await response.json();
+            alert("Task Updated: " + JSON.stringify(data));
+        };
+
+        // Delete Task
+        document.getElementById('deleteTaskForm').onsubmit = async function (e) {
+            e.preventDefault();
+            const taskId = document.querySelector('#deleteTaskForm input[name="id"]').value;
+            const response = await fetch(`${apiBaseUrl}/${taskId}`, { method: 'DELETE' });
+            const data = await response.json();
+            alert("Task Deleted: " + JSON.stringify(data));
         };
     </script>
 </body>
