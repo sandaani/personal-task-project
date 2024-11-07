@@ -7,18 +7,20 @@ const filePath = path.join(__dirname, '../data/tasks.json');
 // Helper function to read tasks from JSON file
 const readTasks = () => readFile(filePath);
 
+// Get all tasks
 exports.getTasks = (req, res) => {
     const tasks = readTasks();
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(tasks));
 };
 
+// Create a new task with optional image upload
 exports.createTask = (req, res) => {
     const form = new formidable.IncomingForm();
     form.parse(req, (err, fields, files) => {
         if (err) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ message: 'Form submission error' }));
+            res.end(JSON.stringify({ message: 'Error in form submission' }));
             return;
         }
 
@@ -41,6 +43,7 @@ exports.createTask = (req, res) => {
     });
 };
 
+// Update an existing task by ID with optional image upload
 exports.updateTask = (req, res) => {
     const taskId = parseInt(req.url.split('/').pop(), 10);
     const tasks = readTasks();
@@ -56,12 +59,14 @@ exports.updateTask = (req, res) => {
     form.parse(req, (err, fields, files) => {
         if (err) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ message: 'Form submission error' }));
+            res.end(JSON.stringify({ message: 'Error in form submission' }));
             return;
         }
 
+        // Update task details
         tasks[taskIndex] = { ...tasks[taskIndex], ...fields };
 
+        // Handle image upload if provided
         if (files.image) {
             const oldPath = files.image.path;
             const newPath = path.join(__dirname, '../uploads/', files.image.name);
@@ -75,6 +80,7 @@ exports.updateTask = (req, res) => {
     });
 };
 
+// Delete a task by ID
 exports.deleteTask = (req, res) => {
     const taskId = parseInt(req.url.split('/').pop(), 10);
     const tasks = readTasks();

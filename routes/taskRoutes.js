@@ -1,4 +1,4 @@
-const taskController = require('../controllers/taskController');
+const taskController = require('../controllers/taskControllers');
 
 const taskRoutes = (req, res) => {
     if (req.method === 'GET' && req.url === '/tasks') {
