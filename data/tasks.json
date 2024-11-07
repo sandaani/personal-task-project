@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "id": 1,
+    "title": [
+      "Sample Task"
+    ],
+    "description": [
+      "A task description"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": 2,
+    "status": "pending"
+  },
+  {
+    "id": 3,
+    "title": [
+      "Updated Task"
+    ],
+    "description": [
+      "This task has a new image"
+    ],
+    "status": "pending"
+  }
+]

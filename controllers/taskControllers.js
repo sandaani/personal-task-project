@@ -19,18 +19,30 @@ exports.createTask = (req, res) => {
     const form = new formidable.IncomingForm();
     form.parse(req, (err, fields, files) => {
         if (err) {
+            console.error('Error in form submission:', err);  // Log the error
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ message: 'Error in form submission' }));
             return;
         }
 
+        console.log('Form Fields:', fields);  // Log the form fields
+        console.log('Uploaded Files:', files);  // Log the uploaded files
+
         const tasks = readTasks();
         const newTask = { id: tasks.length + 1, ...fields, status: 'pending' };
 
         // Handle image upload if provided
-        if (files.image) {
+        if (files.image && files.image.path) {
             const oldPath = files.image.path;
             const newPath = path.join(__dirname, '../uploads/', files.image.name);
+            
+            // Ensure the upload folder exists
+            const uploadDir = path.join(__dirname, '../uploads');
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir);
+            }
+
+            // Rename the file to the new path
             fs.renameSync(oldPath, newPath);
             newTask.image = `/uploads/${files.image.name}`;
         }
@@ -58,18 +70,30 @@ exports.updateTask = (req, res) => {
     const form = new formidable.IncomingForm();
     form.parse(req, (err, fields, files) => {
         if (err) {
+            console.error('Error in form submission:', err);  // Log the error
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ message: 'Error in form submission' }));
             return;
         }
 
+        console.log('Updated Form Fields:', fields);  // Log updated form fields
+        console.log('Updated Files:', files);  // Log updated files
+
         // Update task details
         tasks[taskIndex] = { ...tasks[taskIndex], ...fields };
 
         // Handle image upload if provided
-        if (files.image) {
+        if (files.image && files.image.path) {
             const oldPath = files.image.path;
             const newPath = path.join(__dirname, '../uploads/', files.image.name);
+            
+            // Ensure the upload folder exists
+            const uploadDir = path.join(__dirname, '../uploads');
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir);
+            }
+
+            // Rename the file to the new path
             fs.renameSync(oldPath, newPath);
             tasks[taskIndex].image = `/uploads/${files.image.name}`;
         }
